@@ -24,9 +24,19 @@ class CreatesExe(Signature):
         "vb|vbe|vbs|ws|wsc|wse|wsh)$"
     )
 
+    safelist_re = [
+        "^[a-zA-Z]:\\\\Users\\\\.*\\\\AppData\\\\Roaming\\\\Microsoft\\\\Office\\\\Recent\\\\.*\\.LNK",
+    ]
+
     def on_complete(self):
         for filepath in self.check_file(pattern=self.pattern, actions=["file_written"], regex=True, all=True):
-            self.mark_ioc("file", filepath)
+            on_safelist = False
+            for regex in self.safelist_re:
+                if re.match(regex, filepath, re.I):
+                    on_safelist = True
+                    break
+            if not on_safelist:
+                self.mark_ioc("file", filepath)
 
         return self.has_marks()
 
